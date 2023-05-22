@@ -38,3 +38,28 @@ pub fn ball_movement(mut query: Query<(&Velocity, &mut Transform), With<Ball>>, 
 
     transform.translation = transltation;
 }
+
+pub fn confine_ball_movement(
+    mut query: Query<(&mut Velocity, &mut Transform), With<Ball>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+) {
+    let window = window_query.get_single().unwrap();
+
+    let (mut velocity, mut transform) = query.get_single_mut().unwrap();
+
+    let half_ball_size = BALL_SIZE / 2.;
+    let min = 0. + half_ball_size;
+    let max = window.height() - half_ball_size;
+
+    let mut translation = transform.translation;
+
+    if translation.y < min {
+        translation.y = min;
+        velocity.y *= -1.;
+    } else if translation.y > max {
+        translation.y = max;
+        velocity.y *= -1.;
+    }
+
+    transform.translation = translation;
+}
