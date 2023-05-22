@@ -15,6 +15,12 @@ impl Velocity {
             z: random_velocity(),
         }
     }
+
+    pub fn randomize(&mut self) {
+        self.x = random_velocity();
+        self.y = random_velocity();
+        self.z = random_velocity();
+    }
 }
 
 fn random_velocity() -> f32 {

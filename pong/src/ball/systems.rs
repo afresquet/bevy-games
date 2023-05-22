@@ -63,3 +63,26 @@ pub fn confine_ball_movement(
 
     transform.translation = translation;
 }
+
+pub fn check_for_score(
+    mut query: Query<(&mut Velocity, &mut Transform), With<Ball>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+) {
+    let window = window_query.get_single().unwrap();
+
+    let (mut velocity, mut transform) = query.get_single_mut().unwrap();
+
+    let half_ball_size = BALL_SIZE / 2.;
+    let player_one_score = window.width() + half_ball_size;
+    let player_two_score = 0. - half_ball_size;
+
+    let mut translation = transform.translation;
+
+    if translation.x > player_one_score || translation.x < player_two_score {
+        translation.x = window.width() / 2.;
+        translation.y = window.height() / 2.;
+        velocity.randomize();
+    }
+
+    transform.translation = translation;
+}
