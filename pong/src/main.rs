@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 mod ball;
+mod components;
 mod player;
 mod systems;
 
