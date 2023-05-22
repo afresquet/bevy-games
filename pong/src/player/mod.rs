@@ -26,10 +26,13 @@ const PLAYER_HEIGHT: f32 = 200.0;
 const GUTTER: f32 = 100.0;
 
 pub fn spawn_player(id: usize, commands: &mut Commands, window: &Window) {
-    let x = match id {
-        0 => GUTTER,
-        1 => window.width() - GUTTER,
-        _ => panic!("Only two players allowed"),
+    let Some(player) = Player::from_id(id) else {
+        panic!("Only two players allowed");
+    };
+
+    let x = match player {
+        Player::One => GUTTER,
+        Player::Two => window.width() - GUTTER,
     };
 
     let sprite = Sprite {
@@ -47,6 +50,6 @@ pub fn spawn_player(id: usize, commands: &mut Commands, window: &Window) {
             transform: Transform::from_xyz(x, window.height() / 2.0, 0.0),
             ..Default::default()
         },
-        Player(id),
+        player,
     ));
 }
