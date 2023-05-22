@@ -73,3 +73,26 @@ fn handle_input(direction: &mut f32, up: bool, down: bool) {
         *direction -= 1.;
     }
 }
+
+pub fn confine_player_movement(
+    mut player_query: Query<&mut Transform, With<Player>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+) {
+    let window = window_query.get_single().unwrap();
+
+    for mut transform in player_query.iter_mut() {
+        let half_player_height = PLAYER_HEIGHT / 2.;
+        let min = 0. + half_player_height;
+        let max = window.height() - half_player_height;
+
+        let mut translation = transform.translation;
+
+        if translation.y < min {
+            translation.y = min;
+        } else if translation.y > max {
+            translation.y = max;
+        }
+
+        transform.translation = translation;
+    }
+}
