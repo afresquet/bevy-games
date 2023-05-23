@@ -30,3 +30,22 @@ fn random_velocity() -> f32 {
         -1.
     }
 }
+
+#[derive(Component)]
+pub struct Speed(pub f32);
+
+impl Speed {
+    pub fn increase(&mut self) {
+        self.0 *= 1.10;
+    }
+
+    pub fn reset(&mut self) {
+        self.0 = 200.0;
+    }
+}
+
+impl Default for Speed {
+    fn default() -> Self {
+        Self(200.0)
+    }
+}

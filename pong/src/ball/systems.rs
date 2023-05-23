@@ -4,14 +4,13 @@ use bevy::prelude::*;
 use bevy::sprite::collide_aabb::{collide, Collision};
 use bevy::window::PrimaryWindow;
 
-use crate::components::Velocity;
+use crate::components::*;
 use crate::player::components::Player;
 use crate::player::systems::{PLAYER_HEIGHT, PLAYER_WIDTH};
 
 use super::components::Ball;
 
 const BALL_SIZE: f32 = 20.0;
-const BALL_SPEED: f32 = 200.0;
 
 pub fn spawn_ball(mut commands: Commands, window_query: Query<&Window, With<PrimaryWindow>>) {
     let window = window_query.get_single().unwrap();
@@ -30,16 +29,20 @@ pub fn spawn_ball(mut commands: Commands, window_query: Query<&Window, With<Prim
         },
         Ball,
         Velocity::random(),
+        Speed::default(),
     ));
 }
 
-pub fn ball_movement(mut query: Query<(&Velocity, &mut Transform), With<Ball>>, time: Res<Time>) {
-    let (velocity, mut transform) = query.get_single_mut().unwrap();
+pub fn ball_movement(
+    mut query: Query<(&Velocity, &mut Transform, &Speed), With<Ball>>,
+    time: Res<Time>,
+) {
+    let (velocity, mut transform, speed) = query.get_single_mut().unwrap();
 
     let mut transltation = transform.translation;
 
-    transltation.x += velocity.x * BALL_SPEED * time.delta_seconds();
-    transltation.y += velocity.y * BALL_SPEED * time.delta_seconds();
+    transltation.x += velocity.x * speed.0 * time.delta_seconds();
+    transltation.y += velocity.y * speed.0 * time.delta_seconds();
 
     transform.translation = transltation;
 }
@@ -70,12 +73,12 @@ pub fn confine_ball_movement(
 }
 
 pub fn check_for_score(
-    mut query: Query<(&mut Velocity, &mut Transform), With<Ball>>,
+    mut query: Query<(&mut Velocity, &mut Transform, &mut Speed), With<Ball>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
     let window = window_query.get_single().unwrap();
 
-    let (mut velocity, mut transform) = query.get_single_mut().unwrap();
+    let (mut velocity, mut transform, mut speed) = query.get_single_mut().unwrap();
 
     let half_ball_size = BALL_SIZE / 2.;
     let player_one_score = window.width() + half_ball_size;
@@ -87,16 +90,20 @@ pub fn check_for_score(
         translation.x = window.width() / 2.;
         translation.y = window.height() / 2.;
         velocity.randomize();
+        speed.reset();
     }
 
     transform.translation = translation;
 }
 
 pub fn check_player_collision(
-    mut ball_query: Query<(&mut Velocity, &mut Transform), (With<Ball>, Without<Player>)>,
+    mut ball_query: Query<
+        (&mut Velocity, &mut Transform, &mut Speed),
+        (With<Ball>, Without<Player>),
+    >,
     player_query: Query<&Transform, With<Player>>,
 ) {
-    let (mut ball_velocity, mut ball_transform) = ball_query.get_single_mut().unwrap();
+    let (mut ball_velocity, mut ball_transform, mut speed) = ball_query.get_single_mut().unwrap();
 
     let half_player_width = PLAYER_WIDTH / 2.;
     let half_player_height = PLAYER_HEIGHT / 2.;
@@ -120,6 +127,7 @@ pub fn check_player_collision(
             Some(Collision::Right) => {
                 ball_transform.translation.x = player_transform.translation.x + offset_x;
                 ball_velocity.x = 1.;
+                speed.increase();
             }
             Some(Collision::Bottom) => {
                 ball_transform.translation.y = player_transform.translation.y - offset_y;
@@ -128,6 +136,7 @@ pub fn check_player_collision(
             Some(Collision::Left) => {
                 ball_transform.translation.x = player_transform.translation.x - offset_x;
                 ball_velocity.x = -1.;
+                speed.increase();
             }
             _ => (),
         }
