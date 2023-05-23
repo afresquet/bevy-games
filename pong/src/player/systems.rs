@@ -3,8 +3,8 @@ use bevy::window::PrimaryWindow;
 
 use super::components::Player;
 
-const PLAYER_WIDTH: f32 = 30.0;
-const PLAYER_HEIGHT: f32 = 200.0;
+pub const PLAYER_WIDTH: f32 = 30.0;
+pub const PLAYER_HEIGHT: f32 = 200.0;
 const PLAYER_SPEED: f32 = 300.0;
 const GUTTER: f32 = 100.0;
 

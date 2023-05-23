@@ -1,7 +1,12 @@
+#![allow(clippy::type_complexity)]
+
 use bevy::prelude::*;
+use bevy::sprite::collide_aabb::{collide, Collision};
 use bevy::window::PrimaryWindow;
 
 use crate::components::Velocity;
+use crate::player::components::Player;
+use crate::player::systems::{PLAYER_HEIGHT, PLAYER_WIDTH};
 
 use super::components::Ball;
 
@@ -85,4 +90,46 @@ pub fn check_for_score(
     }
 
     transform.translation = translation;
+}
+
+pub fn check_player_collision(
+    mut ball_query: Query<(&mut Velocity, &mut Transform), (With<Ball>, Without<Player>)>,
+    player_query: Query<&Transform, With<Player>>,
+) {
+    let (mut ball_velocity, mut ball_transform) = ball_query.get_single_mut().unwrap();
+
+    let half_player_width = PLAYER_WIDTH / 2.;
+    let half_player_height = PLAYER_HEIGHT / 2.;
+    let half_ball_size = BALL_SIZE / 2.;
+    let offset_x = half_player_width + half_ball_size;
+    let offset_y = half_player_height + half_ball_size;
+
+    for player_transform in player_query.iter() {
+        let collision = collide(
+            ball_transform.translation,
+            Vec2::splat(BALL_SIZE),
+            player_transform.translation,
+            Vec2::new(PLAYER_WIDTH, PLAYER_HEIGHT),
+        );
+
+        match collision {
+            Some(Collision::Top) => {
+                ball_transform.translation.y = player_transform.translation.y + offset_y;
+                ball_velocity.y = 1.;
+            }
+            Some(Collision::Right) => {
+                ball_transform.translation.x = player_transform.translation.x + offset_x;
+                ball_velocity.x = 1.;
+            }
+            Some(Collision::Bottom) => {
+                ball_transform.translation.y = player_transform.translation.y - offset_y;
+                ball_velocity.y = -1.;
+            }
+            Some(Collision::Left) => {
+                ball_transform.translation.x = player_transform.translation.x - offset_x;
+                ball_velocity.x = -1.;
+            }
+            _ => (),
+        }
+    }
 }
