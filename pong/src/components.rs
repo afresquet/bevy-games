@@ -49,3 +49,6 @@ impl Default for Speed {
         Self(200.0)
     }
 }
+
+#[derive(Component)]
+pub struct ScoreText;

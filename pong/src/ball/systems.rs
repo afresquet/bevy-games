@@ -7,6 +7,7 @@ use bevy::window::PrimaryWindow;
 use crate::components::*;
 use crate::player::components::Player;
 use crate::player::systems::{PLAYER_HEIGHT, PLAYER_WIDTH};
+use crate::resources::Score;
 
 use super::components::Ball;
 
@@ -75,6 +76,7 @@ pub fn confine_ball_movement(
 pub fn check_for_score(
     mut query: Query<(&mut Velocity, &mut Transform, &mut Speed), With<Ball>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
+    mut score: ResMut<Score>,
 ) {
     let window = window_query.get_single().unwrap();
 
@@ -87,6 +89,12 @@ pub fn check_for_score(
     let mut translation = transform.translation;
 
     if translation.x > player_one_score || translation.x < player_two_score {
+        if translation.x > player_one_score {
+            score.add_point(Player::One);
+        } else if translation.x < player_two_score {
+            score.add_point(Player::Two);
+        }
+
         translation.x = window.width() / 2.;
         translation.y = window.height() / 2.;
         velocity.randomize();
