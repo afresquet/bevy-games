@@ -6,71 +6,49 @@ use bevy::window::PrimaryWindow;
 
 use crate::components::*;
 use crate::player::components::Player;
-use crate::player::systems::{PLAYER_HEIGHT, PLAYER_WIDTH};
+use crate::player::systems::*;
 use crate::resources::Score;
 
-use super::components::Ball;
+use super::components::*;
 
-const BALL_SIZE: f32 = 20.0;
+pub const BALL_SIZE: f32 = 20.0;
+const HALF_BALL_SIZE: f32 = BALL_SIZE / 2.0;
 
 pub fn spawn_ball(mut commands: Commands, window_query: Query<&Window, With<PrimaryWindow>>) {
-    let window = window_query.get_single().unwrap();
+    let window = window_query.single();
 
-    let sprite = Sprite {
-        color: Color::WHITE,
-        custom_size: Some(Vec2::splat(BALL_SIZE)),
-        ..Default::default()
-    };
-
-    commands.spawn((
-        SpriteBundle {
-            sprite,
-            transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
-            ..Default::default()
-        },
-        Ball,
-        Velocity::random(),
-        Speed::default(),
-    ));
+    commands.spawn(BallBundle::new(window.width() / 2.0, window.height() / 2.0));
 }
 
 pub fn ball_movement(
     mut query: Query<(&Velocity, &mut Transform, &Speed), With<Ball>>,
     time: Res<Time>,
 ) {
-    let (velocity, mut transform, speed) = query.get_single_mut().unwrap();
+    let (velocity, mut transform, Speed(speed)) = query.single_mut();
 
-    let mut transltation = transform.translation;
+    let velocity = Vec2::new(velocity.x, velocity.y) * *speed * time.delta_seconds();
 
-    transltation.x += velocity.x * speed.0 * time.delta_seconds();
-    transltation.y += velocity.y * speed.0 * time.delta_seconds();
-
-    transform.translation = transltation;
+    transform.translation += velocity.extend(0.0);
 }
 
 pub fn confine_ball_movement(
     mut query: Query<(&mut Velocity, &mut Transform), With<Ball>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let window = window_query.get_single().unwrap();
+    let window = window_query.single();
 
-    let (mut velocity, mut transform) = query.get_single_mut().unwrap();
+    let (mut velocity, mut transform) = query.single_mut();
 
-    let half_ball_size = BALL_SIZE / 2.;
-    let min = 0. + half_ball_size;
-    let max = window.height() - half_ball_size;
+    let min = HALF_BALL_SIZE;
+    let max = window.height() - HALF_BALL_SIZE;
 
-    let mut translation = transform.translation;
-
-    if translation.y < min {
-        translation.y = min;
-        velocity.y *= -1.;
-    } else if translation.y > max {
-        translation.y = max;
-        velocity.y *= -1.;
+    if transform.translation.y < min {
+        transform.translation.y = min;
+        velocity.y = 1.0;
+    } else if transform.translation.y > max {
+        transform.translation.y = max;
+        velocity.y = -1.0;
     }
-
-    transform.translation = translation;
 }
 
 pub fn check_for_score(
@@ -78,30 +56,24 @@ pub fn check_for_score(
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut score: ResMut<Score>,
 ) {
-    let window = window_query.get_single().unwrap();
+    let window = window_query.single();
 
-    let (mut velocity, mut transform, mut speed) = query.get_single_mut().unwrap();
+    let (mut velocity, mut transform, mut speed) = query.single_mut();
 
-    let half_ball_size = BALL_SIZE / 2.;
-    let player_one_score = window.width() + half_ball_size;
-    let player_two_score = 0. - half_ball_size;
+    let player_one_score = window.width() + HALF_BALL_SIZE;
+    let player_two_score = HALF_BALL_SIZE;
 
-    let mut translation = transform.translation;
+    let player = match transform.translation.x {
+        x if x > player_one_score => Player::One,
+        x if x < player_two_score => Player::Two,
+        _ => return,
+    };
 
-    if translation.x > player_one_score || translation.x < player_two_score {
-        if translation.x > player_one_score {
-            score.add_point(Player::One);
-        } else if translation.x < player_two_score {
-            score.add_point(Player::Two);
-        }
+    score.add_point(player);
 
-        translation.x = window.width() / 2.;
-        translation.y = window.height() / 2.;
-        velocity.randomize();
-        speed.reset();
-    }
-
-    transform.translation = translation;
+    transform.translation = Vec3::new(window.width() / 2.0, window.height() / 2.0, 0.0);
+    velocity.randomize();
+    speed.reset();
 }
 
 pub fn check_player_collision(
@@ -111,13 +83,10 @@ pub fn check_player_collision(
     >,
     player_query: Query<&Transform, With<Player>>,
 ) {
-    let (mut ball_velocity, mut ball_transform, mut speed) = ball_query.get_single_mut().unwrap();
+    let (mut ball_velocity, mut ball_transform, mut speed) = ball_query.single_mut();
 
-    let half_player_width = PLAYER_WIDTH / 2.;
-    let half_player_height = PLAYER_HEIGHT / 2.;
-    let half_ball_size = BALL_SIZE / 2.;
-    let offset_x = half_player_width + half_ball_size;
-    let offset_y = half_player_height + half_ball_size;
+    let offset_x = HALF_PLAYER_WIDTH + HALF_BALL_SIZE;
+    let offset_y = HALF_PLAYER_HEIGHT + HALF_BALL_SIZE;
 
     for player_transform in player_query.iter() {
         let collision = collide(
@@ -130,20 +99,20 @@ pub fn check_player_collision(
         match collision {
             Some(Collision::Top) => {
                 ball_transform.translation.y = player_transform.translation.y + offset_y;
-                ball_velocity.y = 1.;
+                ball_velocity.y = 1.0;
             }
             Some(Collision::Right) => {
                 ball_transform.translation.x = player_transform.translation.x + offset_x;
-                ball_velocity.x = 1.;
+                ball_velocity.x = 1.0;
                 speed.increase();
             }
             Some(Collision::Bottom) => {
                 ball_transform.translation.y = player_transform.translation.y - offset_y;
-                ball_velocity.y = -1.;
+                ball_velocity.y = -1.0;
             }
             Some(Collision::Left) => {
                 ball_transform.translation.x = player_transform.translation.x - offset_x;
-                ball_velocity.x = -1.;
+                ball_velocity.x = -1.0;
                 speed.increase();
             }
             _ => (),

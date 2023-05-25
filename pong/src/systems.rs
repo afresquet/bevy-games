@@ -5,7 +5,7 @@ use crate::components::ScoreText;
 use crate::resources::Score;
 
 pub fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<PrimaryWindow>>) {
-    let window = window_query.get_single().unwrap();
+    let window = window_query.single();
 
     commands.spawn(Camera2dBundle {
         transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
@@ -44,7 +44,7 @@ pub fn spawn_score(mut commands: Commands, asset_server: Res<AssetServer>, score
 
 pub fn update_score(mut text_query: Query<&mut Text, With<ScoreText>>, score: Res<Score>) {
     if score.is_changed() {
-        let mut text = text_query.get_single_mut().unwrap();
+        let mut text = text_query.single_mut();
 
         text.sections[0].value = get_score_string(&score);
     }

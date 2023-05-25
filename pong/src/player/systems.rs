@@ -1,44 +1,23 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
-use super::components::Player;
+use super::components::*;
 
 pub const PLAYER_WIDTH: f32 = 30.0;
 pub const PLAYER_HEIGHT: f32 = 200.0;
+pub const HALF_PLAYER_WIDTH: f32 = PLAYER_WIDTH / 2.0;
+pub const HALF_PLAYER_HEIGHT: f32 = PLAYER_HEIGHT / 2.0;
 const PLAYER_SPEED: f32 = 300.0;
 const GUTTER: f32 = 100.0;
 
 pub fn spawn_players(mut commands: Commands, window_query: Query<&Window, With<PrimaryWindow>>) {
-    let window = window_query.get_single().unwrap();
+    let window = window_query.single();
 
-    spawn_player(0, &mut commands, window);
-    spawn_player(1, &mut commands, window);
-}
+    let y = window.height() / 2.0;
 
-fn spawn_player(id: usize, commands: &mut Commands, window: &Window) {
-    let Some(player) = Player::from_id(id) else {
-        panic!("Only two players allowed");
-    };
+    commands.spawn(PlayerBundle::new(Player::One, GUTTER, y));
 
-    let x = match player {
-        Player::One => GUTTER,
-        Player::Two => window.width() - GUTTER,
-    };
-
-    let sprite = Sprite {
-        color: Color::WHITE,
-        rect: Some(Rect::new(0.0, 0.0, PLAYER_WIDTH, PLAYER_HEIGHT)),
-        ..Default::default()
-    };
-
-    commands.spawn((
-        SpriteBundle {
-            sprite,
-            transform: Transform::from_xyz(x, window.height() / 2.0, 0.0),
-            ..Default::default()
-        },
-        player,
-    ));
+    commands.spawn(PlayerBundle::new(Player::Two, window.width() - GUTTER, y));
 }
 
 pub fn player_movement(
@@ -47,30 +26,18 @@ pub fn player_movement(
     time: Res<Time>,
 ) {
     for (player, mut transform) in player_query.iter_mut() {
-        let mut direction = 0.;
+        let (up, down) = match player {
+            Player::One => (input.pressed(KeyCode::W), input.pressed(KeyCode::S)),
+            Player::Two => (input.pressed(KeyCode::Up), input.pressed(KeyCode::Down)),
+        };
 
-        match player {
-            Player::One => handle_input(
-                &mut direction,
-                input.pressed(KeyCode::W),
-                input.pressed(KeyCode::S),
-            ),
-            Player::Two => handle_input(
-                &mut direction,
-                input.pressed(KeyCode::Up),
-                input.pressed(KeyCode::Down),
-            ),
-        }
+        let direction = match (up, down) {
+            (true, false) => 1.0,
+            (false, true) => -1.0,
+            (_, _) => continue,
+        };
 
         transform.translation.y += direction * PLAYER_SPEED * time.delta_seconds();
-    }
-}
-
-fn handle_input(direction: &mut f32, up: bool, down: bool) {
-    if up {
-        *direction += 1.;
-    } else if down {
-        *direction -= 1.;
     }
 }
 
@@ -78,21 +45,16 @@ pub fn confine_player_movement(
     mut player_query: Query<&mut Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let window = window_query.get_single().unwrap();
+    let window = window_query.single();
 
     for mut transform in player_query.iter_mut() {
-        let half_player_height = PLAYER_HEIGHT / 2.;
-        let min = 0. + half_player_height;
-        let max = window.height() - half_player_height;
+        let min = HALF_PLAYER_HEIGHT;
+        let max = window.height() - HALF_PLAYER_HEIGHT;
 
-        let mut translation = transform.translation;
-
-        if translation.y < min {
-            translation.y = min;
-        } else if translation.y > max {
-            translation.y = max;
+        if transform.translation.y < min {
+            transform.translation.y = min;
+        } else if transform.translation.y > max {
+            transform.translation.y = max;
         }
-
-        transform.translation = translation;
     }
 }

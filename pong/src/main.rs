@@ -13,7 +13,14 @@ use systems::*;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Pong".to_string(),
+                resizable: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        }))
         .insert_resource(ClearColor(Color::BLACK))
         .init_resource::<Score>()
         .add_startup_system(spawn_camera)

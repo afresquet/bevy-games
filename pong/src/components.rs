@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use rand::{seq::SliceRandom, thread_rng};
 
 #[derive(Component)]
 pub struct Velocity {
@@ -24,11 +25,9 @@ impl Velocity {
 }
 
 fn random_velocity() -> f32 {
-    if rand::random() {
-        1.
-    } else {
-        -1.
-    }
+    let mut rng = thread_rng();
+
+    *[-1.0, 1.0].choose(&mut rng).unwrap()
 }
 
 #[derive(Component)]
