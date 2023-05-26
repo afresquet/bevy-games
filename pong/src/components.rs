@@ -16,6 +16,22 @@ impl Velocity {
     pub fn randomize(&mut self) {
         *self = Self::random();
     }
+
+    pub fn set(&mut self, x: Option<f32>, y: Option<f32>, z: Option<f32>) {
+        self.0.x = x.unwrap_or(self.0.x);
+
+        self.0.y = y.unwrap_or(self.0.y);
+
+        self.0.z = z.unwrap_or(self.0.z);
+    }
+
+    pub fn set_x(&mut self, x: f32) {
+        self.set(Some(x), None, None);
+    }
+
+    pub fn set_y(&mut self, y: f32) {
+        self.set(None, Some(y), None);
+    }
 }
 
 fn random_velocity() -> f32 {

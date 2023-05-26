@@ -37,19 +37,17 @@ pub fn confine_ball_movement(
 ) {
     let window = window_query.single();
 
-    let (velocity, mut transform) = query.single_mut();
-
-    let Velocity(mut velocity) = *velocity;
+    let (mut velocity, mut transform) = query.single_mut();
 
     let min = HALF_BALL_SIZE;
     let max = window.height() - HALF_BALL_SIZE;
 
     if transform.translation.y < min {
         transform.translation.y = min;
-        velocity.y = 1.0;
+        velocity.set_y(1.0);
     } else if transform.translation.y > max {
         transform.translation.y = max;
-        velocity.y = -1.0;
+        velocity.set_y(-1.0);
     }
 }
 
@@ -85,9 +83,7 @@ pub fn check_player_collision(
     >,
     player_query: Query<&Transform, With<Player>>,
 ) {
-    let (ball_velocity, mut ball_transform, mut speed) = ball_query.single_mut();
-
-    let Velocity(mut ball_velocity) = *ball_velocity;
+    let (mut ball_velocity, mut ball_transform, mut speed) = ball_query.single_mut();
 
     let offset_x = HALF_PLAYER_WIDTH + HALF_BALL_SIZE;
     let offset_y = HALF_PLAYER_HEIGHT + HALF_BALL_SIZE;
@@ -103,20 +99,20 @@ pub fn check_player_collision(
         match collision {
             Some(Collision::Top) => {
                 ball_transform.translation.y = player_transform.translation.y + offset_y;
-                ball_velocity.y = 1.0;
+                ball_velocity.set_y(1.0);
             }
             Some(Collision::Right) => {
                 ball_transform.translation.x = player_transform.translation.x + offset_x;
-                ball_velocity.x = 1.0;
+                ball_velocity.set_x(1.0);
                 speed.increase();
             }
             Some(Collision::Bottom) => {
                 ball_transform.translation.y = player_transform.translation.y - offset_y;
-                ball_velocity.y = -1.0;
+                ball_velocity.set_y(-1.0);
             }
             Some(Collision::Left) => {
                 ball_transform.translation.x = player_transform.translation.x - offset_x;
-                ball_velocity.x = -1.0;
+                ball_velocity.set_x(-1.0);
                 speed.increase();
             }
             _ => (),
