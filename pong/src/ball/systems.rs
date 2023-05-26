@@ -24,9 +24,9 @@ pub fn ball_movement(
     mut query: Query<(&Velocity, &mut Transform, &Speed), With<Ball>>,
     time: Res<Time>,
 ) {
-    let (velocity, mut transform, Speed(speed)) = query.single_mut();
+    let (Velocity(velocity), mut transform, Speed(speed)) = query.single_mut();
 
-    let velocity = Vec2::new(velocity.x, velocity.y) * *speed * time.delta_seconds();
+    let velocity = velocity.truncate() * *speed * time.delta_seconds();
 
     transform.translation += velocity.extend(0.0);
 }
@@ -37,7 +37,9 @@ pub fn confine_ball_movement(
 ) {
     let window = window_query.single();
 
-    let (mut velocity, mut transform) = query.single_mut();
+    let (velocity, mut transform) = query.single_mut();
+
+    let Velocity(mut velocity) = *velocity;
 
     let min = HALF_BALL_SIZE;
     let max = window.height() - HALF_BALL_SIZE;
@@ -83,7 +85,9 @@ pub fn check_player_collision(
     >,
     player_query: Query<&Transform, With<Player>>,
 ) {
-    let (mut ball_velocity, mut ball_transform, mut speed) = ball_query.single_mut();
+    let (ball_velocity, mut ball_transform, mut speed) = ball_query.single_mut();
+
+    let Velocity(mut ball_velocity) = *ball_velocity;
 
     let offset_x = HALF_PLAYER_WIDTH + HALF_BALL_SIZE;
     let offset_y = HALF_PLAYER_HEIGHT + HALF_BALL_SIZE;
