@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::components::Dir;
+
 use super::systems::*;
 
 #[derive(Component)]
@@ -12,6 +14,7 @@ pub enum Player {
 pub struct PlayerBundle {
     player: Player,
     sprite_bundle: SpriteBundle,
+    direction: Dir,
     keycodes: KeyCodes,
 }
 
@@ -47,6 +50,7 @@ impl PlayerBundle {
                 transform: Transform::from_xyz(x, y, 0.0),
                 ..Default::default()
             },
+            direction: Dir::default(),
             keycodes,
         }
     }

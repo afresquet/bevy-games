@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
+use crate::components::Dir;
+
 use super::components::*;
 
 pub const PLAYER_WIDTH: f32 = 30.0;
@@ -20,19 +22,27 @@ pub fn spawn_players(mut commands: Commands, window_query: Query<&Window, With<P
     commands.spawn(PlayerBundle::new(Player::Two, window.width() - GUTTER, y));
 }
 
-pub fn player_movement(
+pub fn handle_player_input(
     input: Res<Input<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &KeyCodes), With<Player>>,
-    time: Res<Time>,
+    mut player_query: Query<(&mut Dir, &KeyCodes), With<Player>>,
 ) {
-    for (mut transform, keycodes) in player_query.iter_mut() {
+    for (mut direction, keycodes) in player_query.iter_mut() {
         let KeyCodes { up, down } = *keycodes;
 
-        let direction = match (input.pressed(up), input.pressed(down)) {
-            (true, false) => 1.0,
-            (false, true) => -1.0,
-            (_, _) => continue,
+        match (input.pressed(up), input.pressed(down)) {
+            (true, false) => direction.set(Dir::Up),
+            (false, true) => direction.set(Dir::Down),
+            (_, _) => direction.set(Dir::Idle),
         };
+    }
+}
+
+pub fn player_movement(
+    mut player_query: Query<(&mut Transform, &Dir), With<Player>>,
+    time: Res<Time>,
+) {
+    for (mut transform, direction) in player_query.iter_mut() {
+        let Some(direction) = direction.should_move() else { continue; };
 
         transform.translation.y += direction * PLAYER_SPEED * time.delta_seconds();
     }

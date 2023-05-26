@@ -43,5 +43,31 @@ impl Default for Speed {
     }
 }
 
+#[derive(Component, Default, PartialEq, Eq)]
+pub enum Dir {
+    Up,
+    #[default]
+    Idle,
+    Down,
+}
+
+impl Dir {
+    pub fn should_move(&self) -> Option<f32> {
+        match self {
+            Self::Up => Some(1.0),
+            Self::Down => Some(-1.0),
+            Self::Idle => None,
+        }
+    }
+
+    pub fn set(&mut self, direction: Self) {
+        if *self == direction {
+            return;
+        }
+
+        *self = direction;
+    }
+}
+
 #[derive(Component)]
 pub struct ScoreText;
