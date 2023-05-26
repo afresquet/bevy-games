@@ -58,10 +58,6 @@ pub fn confine_player_movement(
     let max = window.height() - HALF_PLAYER_HEIGHT;
 
     for mut transform in player_query.iter_mut() {
-        if transform.translation.y < min {
-            transform.translation.y = min;
-        } else if transform.translation.y > max {
-            transform.translation.y = max;
-        }
+        transform.translation.y = transform.translation.y.clamp(min, max);
     }
 }

@@ -43,12 +43,12 @@ pub fn confine_ball_movement(
     let max = window.height() - HALF_BALL_SIZE;
 
     if transform.translation.y < min {
-        transform.translation.y = min;
         velocity.set_y(1.0);
     } else if transform.translation.y > max {
-        transform.translation.y = max;
         velocity.set_y(-1.0);
     }
+
+    transform.translation.y = transform.translation.y.clamp(min, max);
 }
 
 pub fn check_for_score(
