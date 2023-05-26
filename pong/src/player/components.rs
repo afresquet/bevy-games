@@ -12,6 +12,13 @@ pub enum Player {
 pub struct PlayerBundle {
     player: Player,
     sprite_bundle: SpriteBundle,
+    keycodes: KeyCodes,
+}
+
+#[derive(Component)]
+pub struct KeyCodes {
+    pub up: KeyCode,
+    pub down: KeyCode,
 }
 
 impl PlayerBundle {
@@ -22,6 +29,17 @@ impl PlayerBundle {
             ..Default::default()
         };
 
+        let keycodes = match player {
+            Player::One => KeyCodes {
+                up: KeyCode::W,
+                down: KeyCode::S,
+            },
+            Player::Two => KeyCodes {
+                up: KeyCode::Up,
+                down: KeyCode::Down,
+            },
+        };
+
         PlayerBundle {
             player,
             sprite_bundle: SpriteBundle {
@@ -29,6 +47,7 @@ impl PlayerBundle {
                 transform: Transform::from_xyz(x, y, 0.0),
                 ..Default::default()
             },
+            keycodes,
         }
     }
 }

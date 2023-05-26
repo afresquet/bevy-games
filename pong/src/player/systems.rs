@@ -22,16 +22,13 @@ pub fn spawn_players(mut commands: Commands, window_query: Query<&Window, With<P
 
 pub fn player_movement(
     input: Res<Input<KeyCode>>,
-    mut player_query: Query<(&Player, &mut Transform), With<Player>>,
+    mut player_query: Query<(&mut Transform, &KeyCodes), With<Player>>,
     time: Res<Time>,
 ) {
-    for (player, mut transform) in player_query.iter_mut() {
-        let (up, down) = match player {
-            Player::One => (input.pressed(KeyCode::W), input.pressed(KeyCode::S)),
-            Player::Two => (input.pressed(KeyCode::Up), input.pressed(KeyCode::Down)),
-        };
+    for (mut transform, keycodes) in player_query.iter_mut() {
+        let KeyCodes { up, down } = *keycodes;
 
-        let direction = match (up, down) {
+        let direction = match (input.pressed(up), input.pressed(down)) {
             (true, false) => 1.0,
             (false, true) => -1.0,
             (_, _) => continue,
@@ -47,10 +44,10 @@ pub fn confine_player_movement(
 ) {
     let window = window_query.single();
 
-    for mut transform in player_query.iter_mut() {
-        let min = HALF_PLAYER_HEIGHT;
-        let max = window.height() - HALF_PLAYER_HEIGHT;
+    let min = HALF_PLAYER_HEIGHT;
+    let max = window.height() - HALF_PLAYER_HEIGHT;
 
+    for mut transform in player_query.iter_mut() {
         if transform.translation.y < min {
             transform.translation.y = min;
         } else if transform.translation.y > max {
