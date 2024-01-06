@@ -17,10 +17,7 @@ pub fn spawn_score(mut commands: Commands, asset_server: Res<AssetServer>, score
     commands
         .spawn(NodeBundle {
             style: Style {
-                min_size: Size {
-                    width: Val::Percent(100.0),
-                    ..Default::default()
-                },
+                width: Val::Percent(100.0),
                 justify_content: JustifyContent::Center,
                 ..Default::default()
             },

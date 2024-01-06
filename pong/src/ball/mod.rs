@@ -15,10 +15,11 @@ enum PhysicsSet {
 
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
-        app.configure_set(PhysicsSet::Movement.before(PhysicsSet::Collision))
-            .add_startup_system(spawn_ball)
-            .add_system(ball_movement.in_set(PhysicsSet::Movement))
+        app.configure_sets(Update, PhysicsSet::Movement.before(PhysicsSet::Collision))
+            .add_systems(Startup, spawn_ball)
+            .add_systems(Update, ball_movement.in_set(PhysicsSet::Movement))
             .add_systems(
+                Update,
                 (
                     check_player_collision,
                     confine_ball_movement,
